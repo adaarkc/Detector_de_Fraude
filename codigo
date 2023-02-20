@@ -1,0 +1,81 @@
+
+tdf <- read_csv("C:\\Users\\adaar\\OneDrive\\Documents\\CSVs\\transacciones_ago_2016_feb_2022.csv", show_col_types = FALSE)
+
+view(tdf)
+
+## Limpiar y ver solo columnas relevantes 
+
+tdf_1 <- tdf[,c("fecha_creacion","id_cargo", "tipo_transaccion", "metodo_pago",
+                "estatus", "codigo_antifraude", "monto_cargo", "descripcion",
+                "banco", "marca_tarjeta", "tipo_tarjeta", "fecha_contracargo")]
+
+view(tdf_1)
+
+## Filrar por metodo_pago para solo ver las de CreditCardPayment
+
+tdf_2 <- filter(tdf_1, metodo_pago == "CreditCardPayment")
+
+view(tdf_2)
+
+## Filtrar por codigo_antifraude para solo ver las acceptadas (blank)
+## y las suspected_fraud 
+
+tdf_3 <- filter(tdf_2, codigo_antifraude == "suspected_fraud" | 
+                  is.na(codigo_antifraude))
+
+view(tdf_3)
+
+## Filtrar por tipo_transaccion para solo ver los blank (rechazados)
+## y las procesadas cargo
+
+tdf_4 <- filter(tdf_3, tipo_transaccion == "cargo" | 
+                  is.na(tipo_transaccion))
+
+view(tdf_4)
+
+## Renombrando valores de columna marca_tarjeta  
+
+tdf_4 <- tdf_4 %>% 
+  mutate(marca_tarjeta=recode(marca_tarjeta, VISA='visa',
+                       MC='mastercard', american_express='amex',
+                       AMERICAN_EXPRESS='amex'))
+
+view(tdf_4)
+
+## Agregando columna que muestra si una transaccion 
+## es fraude o no 
+
+tdf_4$fraud <- ifelse((tdf_4$tipo_transaccion=="cargo" & tdf_4$estatus=="paid"
+                      & is.na(tdf_4$codigo_antifraude)), "No", "Yes")
+
+view(tdf_4)
+
+## Separar la fecha en 3 columnas dia, mes, hora (hh:mm:ss)
+## Paso 1: Separar fecha_creacion en fecha, hora y min
+
+tdf_5 <- tdf_4 %>% 
+  mutate(fecha = c(as.Date(fecha_creacion)),
+         hora = c(format(as.POSIXct(fecha_creacion), format = "%H")), 
+         min = c(format(as.POSIXct(fecha_creacion), format = "%M")))
+
+view(tdf_5)
+
+## Paso 2: Separar fecha en año, mes y dia 
+
+tdf_5 <- tdf_5 %>% 
+  mutate(año = c(as.numeric(format(fecha, format = "%Y"))),
+         mes = c(as.numeric(format(fecha, format = "%m"))),
+         dia = c(as.numeric(format(fecha, format = "%d"))))
+
+view(tdf_5)
+
+## Limpiar tabla tdf_5 y solo ver columnas relevantes 
+
+tdf_6 <- tdf_5[,c("mes", "dia", "hora", "min", "monto_cargo", 
+                  "banco", "marca_tarjeta", "tipo_tarjeta", "fraud")]
+
+view(tdf_6)
+
+write.csv(tdf_6, "C:\\Users\\adaar\\OneDrive\\Documents\\transactions.csv", 
+          row.names = FALSE)
+
