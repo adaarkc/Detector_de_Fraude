@@ -1,4 +1,4 @@
-# App demo de un Detector de Transacciones Fraudulentas usando ML
+# Detector de Transacciones Fraudulentas usando ML
 
 El código demuestra como limpie los datos de Agosto 2016 a Marzo 2022. 
 
